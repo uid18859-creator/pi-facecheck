@@ -11,7 +11,6 @@ import StudentDashboard from "./pages/StudentDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import UploadPhotos from "./pages/UploadPhotos";
 import StudentAttendance from "./pages/StudentAttendance";
-import SetupTeachers from "./pages/SetupTeachers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +25,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/setup-teachers" element={<SetupTeachers />} />
             <Route
               path="/student/dashboard"
               element={
