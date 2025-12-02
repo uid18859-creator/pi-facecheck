@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap, Users, Camera, TrendingUp, ArrowRight } from 'lucide-react';
@@ -8,6 +9,62 @@ import { GraduationCap, Users, Camera, TrendingUp, ArrowRight } from 'lucide-rea
 const Index = () => {
   const navigate = useNavigate();
   const { user, profile, loading } = useAuth();
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const initializeTeachers = async () => {
+      try {
+        // Check if teachers already exist
+        const { data: existingTeachers } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('role', 'teacher')
+          .limit(1);
+
+        if (existingTeachers && existingTeachers.length > 0) {
+          setIsInitializing(false);
+          return;
+        }
+
+        // Create teacher accounts
+        const teacherAccounts = [
+          { username: 'maths', email: 'maths@school.edu', password: 'Maths@123', subject: 'Maths' },
+          { username: 'dsa', email: 'dsa@school.edu', password: 'Dsa@123', subject: 'DSA' },
+          { username: 'ldco', email: 'ldco@school.edu', password: 'Ldco@123', subject: 'LDCO' },
+          { username: 'os', email: 'os@school.edu', password: 'Os@123', subject: 'OS' },
+          { username: 'basket', email: 'basket@school.edu', password: 'Basket@123', subject: 'Basket Course' },
+        ];
+
+        for (const teacher of teacherAccounts) {
+          const { data: subjectData } = await supabase
+            .from('subjects')
+            .select('id')
+            .eq('subject_name', teacher.subject)
+            .single();
+
+          if (subjectData) {
+            await supabase.auth.signUp({
+              email: teacher.email,
+              password: teacher.password,
+              options: {
+                data: {
+                  full_name: `${teacher.subject} Teacher`,
+                  role: 'teacher',
+                  subject_id: subjectData.id,
+                },
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Teacher initialization:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeTeachers();
+  }, []);
 
   useEffect(() => {
     if (!loading && user && profile) {
@@ -19,10 +76,17 @@ const Index = () => {
     }
   }, [user, profile, loading, navigate]);
 
-  if (loading) {
+  if (loading || isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-background">
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-primary shadow-elegant">
+              <GraduationCap className="h-10 w-10 text-white animate-pulse" />
+            </div>
+          </div>
+          <p className="text-muted-foreground">{isInitializing ? 'Initializing system...' : 'Loading...'}</p>
+        </div>
       </div>
     );
   }
