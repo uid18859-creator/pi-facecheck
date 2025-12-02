@@ -12,6 +12,7 @@ import { GraduationCap, Users } from 'lucide-react';
 export default function Auth() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(false);
 
   // Student signup form
   const [studentEmail, setStudentEmail] = useState('');
@@ -26,6 +27,43 @@ export default function Auth() {
   // Teacher login form
   const [teacherUsername, setTeacherUsername] = useState('');
   const [teacherPassword, setTeacherPassword] = useState('');
+
+  // Initialize teacher accounts if needed
+  const initializeTeacherAccounts = async () => {
+    try {
+      const teacherAccounts = [
+        { username: 'maths', email: 'maths@school.edu', password: 'Maths@123', subject: 'Maths' },
+        { username: 'dsa', email: 'dsa@school.edu', password: 'Dsa@123', subject: 'DSA' },
+        { username: 'ldco', email: 'ldco@school.edu', password: 'Ldco@123', subject: 'LDCO' },
+        { username: 'os', email: 'os@school.edu', password: 'Os@123', subject: 'OS' },
+        { username: 'basket', email: 'basket@school.edu', password: 'Basket@123', subject: 'Basket Course' },
+      ];
+
+      for (const teacher of teacherAccounts) {
+        const { data: subjectData } = await supabase
+          .from('subjects')
+          .select('id')
+          .eq('subject_name', teacher.subject)
+          .maybeSingle();
+
+        if (subjectData) {
+          await supabase.auth.signUp({
+            email: teacher.email,
+            password: teacher.password,
+            options: {
+              data: {
+                full_name: `${teacher.subject} Teacher`,
+                role: 'teacher',
+                subject_id: subjectData.id,
+              },
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Teacher initialization:', error);
+    }
+  };
 
   const handleStudentSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +132,7 @@ export default function Auth() {
   const handleTeacherLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setInitializing(true);
 
     // Teacher login with fixed credentials
     const teacherCredentials: Record<string, { email: string; password: string }> = {
@@ -109,10 +148,14 @@ export default function Auth() {
     if (!credentials) {
       toast.error('Invalid teacher username');
       setLoading(false);
+      setInitializing(false);
       return;
     }
 
     try {
+      // First, ensure teacher accounts are created
+      await initializeTeacherAccounts();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: teacherPassword,
@@ -138,6 +181,7 @@ export default function Auth() {
       toast.error(error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
+      setInitializing(false);
     }
   };
 
@@ -270,7 +314,7 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Teacher Login'}
+                  {initializing ? 'Initializing accounts...' : loading ? 'Logging in...' : 'Teacher Login'}
                 </Button>
               </form>
             </TabsContent>
