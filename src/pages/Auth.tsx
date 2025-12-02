@@ -248,6 +248,11 @@ export default function Auth() {
                     Use: maths, dsa, ldco, os, or basket
                   </span>
                 </div>
+                <div className="flex items-center gap-2 rounded-lg bg-primary/10 border border-primary/20 p-3 text-sm">
+                  <span className="text-primary text-xs">
+                    First time? <a href="/setup-teachers" className="underline font-medium">Create teacher accounts here</a>
+                  </span>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="teacher-username">Username</Label>
                   <Input
